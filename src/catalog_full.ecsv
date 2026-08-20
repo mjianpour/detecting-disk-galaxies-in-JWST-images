@@ -28,7 +28,7 @@
 # - {name: flag_baddata, datatype: bool}
 # - {name: keep, datatype: bool}
 # meta: !!omap
-# - {date: '2026-08-19 02:32:11 +0330'}
+# - {date: '2026-08-20 05:27:23 +0330'}
 # - version: {Python: 3.12.3, astropy: 8.0.1, bottleneck: null, gwcs: null, matplotlib: 3.11.1, numpy: 2.5.1, photutils: 3.0.0, scipy: 1.18.0,
 #     skimage: 0.26.0}
 # - {local_bkg_width: 0}
