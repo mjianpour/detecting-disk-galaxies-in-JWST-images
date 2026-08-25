@@ -1,0 +1,10 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: file, datatype: string}
+# - {name: n_sources, datatype: int64}
+# - {name: description, datatype: string}
+# schema: astropy-2.0
+file n_sources description
+catalog_galaxies_final.ecsv 22 "Final galaxy catalog"
+catalog_stars_final.ecsv 0 "Final star catalog"
