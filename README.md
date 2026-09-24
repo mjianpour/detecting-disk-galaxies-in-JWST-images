@@ -20,6 +20,8 @@ After the job is done ...
 - A `.pdf` file named `ceers_barred_galaxies_report.pdf` is created to present a report of detected barred galaxies and their properties such as **bar eccentricity, PA, bar length, RA, declanation, etc.** 
 - Every detected galaxies are stored in `/cutouts_physical` folder as individual `.fits` files. 
 - Barred galaxies are stored in the folder `/barred_galaxies` in two separate folders `/strongly_barred` and `/weakly_barred` as individual `.fits` files, each file standing for barred galaxy. 
+
+## JWST Properties & Characteristics
 # Contents
 
 ## How to Use this Repository.
@@ -48,6 +50,16 @@ You can display an individual exported `.fits` galaxy using the notebook `better
 
 ## Noise Reduction Methods
 
+### Pre-Reduced Noises
+First thing to note is that `hlsp_ceers_jwst_nircam_nircam8_f444w_dr0.6_i2d.fits` and similar files, downloaded [from here](https://ceers.github.io/dr06.html) have gone through a noise reduction pipeline before being published. Noises such as, snowballs, wisps, $\frac{1}{f}$ noise have subtracted earlier by CEERS staff. 
+
+> Source: https://ceers.github.io/dr06.html#:~:text=WFC3%20F160W-,DATA%20REDUCTION,Pipeline%20parameter%20files%20are%20available%20on%20GitHub%20at%20ceers%2Dnircam.,-EPOCH%201%262
 ## Source Detection & Filtering
+
+### Sky Threshold
+### Convolution & Deblending
+### Source Detection
+### Filtering the Detected Souces
 ## Indentifying Barred Galaxies (First level Esitmation)
 ## Processing Extracted Barred Galaxies Precisely
+
