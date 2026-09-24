@@ -40,7 +40,7 @@
 # - {name: is_galaxy, datatype: bool}
 # - {name: physical_label, datatype: int64}
 # meta: !!omap
-# - {date: '2026-09-24 03:59:11 +0330'}
+# - {date: '2026-09-24 19:33:31 +0330'}
 # - version: {Python: 3.12.3, astropy: 8.0.1, bottleneck: null, gwcs: null, matplotlib: 3.11.1, numpy: 2.5.1, photutils: 3.0.0, scipy: 1.18.0,
 #     skimage: 0.26.0}
 # - {local_bkg_width: 0}
