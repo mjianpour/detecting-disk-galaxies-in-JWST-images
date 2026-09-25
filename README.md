@@ -187,7 +187,167 @@ There are different ways to identify the stellar bar in an individual galaxy. Th
 4. If $q < 0.40$, galaxy will be known as **strongly barred**. 
 5. If $0.40 < q < 0.60$, galaxy will be known as **weakly barred**. 
 ## Code Cells
-## Bar Frcation
+
+```python
+from scipy.ndimage import (
+    binary_closing,
+    generate_binary_structure,
+    label as nd_label,
+    center_of_mass,
+    sum as nd_sum,
+)
+
+def is_barred(result: dict):
+    """Return 'weakly_barred', 'strongly_barred', or None for a galaxy cutout."""
+    image_path = f"cutouts_physical/phys_src_{int(result['label']):05d}.fits"
+
+    with fits.open(image_path) as hdul:
+        sci_image = hdul["SCI"].data.astype(float)
+
+    _, _, _ = sigma_clipped_stats(sci_image, sigma=3.0)
+
+    # Smooth lightly to suppress pixel noise while retaining bar-like structure.
+    kernel_light = make_2dgaussian_kernel(1.5, size=5)
+    conv_image = convolve(sci_image, kernel_light)
+
+    _, _, sky_std_conv = sigma_clipped_stats(conv_image, sigma=3.0)
+    _, sky_median_conv, _ = sigma_clipped_stats(conv_image, sigma=3.0)
+    conv_sub = conv_image - sky_median_conv
+
+    peak_conv = np.nanmax(conv_sub)
+    if not np.isfinite(peak_conv) or peak_conv <= 0:
+        return None
+
+    threshold = max(3.0 * sky_std_conv, 0.53 * peak_conv)
+    binary = conv_sub > threshold
+
+    structure = generate_binary_structure(2, 2)
+    binary = binary_closing(binary, structure=structure, iterations=1)
+
+    labels, n_labels = nd_label(binary, structure=structure)
+    if n_labels == 0:
+        return None
+
+    if n_labels > 1:
+        sizes = nd_sum(binary, labels, range(1, n_labels + 1))
+        largest = int(np.argmax(sizes)) + 1
+        cy, cx = center_of_mass(binary, labels, largest)
+        r_keep = 1.5 * np.sqrt(sizes[largest - 1] / np.pi)
+
+        keep = [largest]
+        for label_id in range(1, n_labels + 1):
+            if label_id == largest or sizes[label_id - 1] < 3:
+                continue
+            yi, xi = center_of_mass(binary, labels, label_id)
+            if np.hypot(yi - cy, xi - cx) < r_keep:
+                keep.append(label_id)
+
+        binary = np.isin(labels, keep)
+
+    n_mask_pix = int(binary.sum())
+    if n_mask_pix == 0:
+        return None
+
+    r_eq = float(np.sqrt(n_mask_pix / np.pi))
+    if r_eq < 4.0:
+        return None
+
+    ys, xs = np.where(binary)
+    weights = np.clip(conv_sub[binary], 0.0, None)
+    total_weight = weights.sum()
+    if not np.isfinite(total_weight) or total_weight <= 0:
+        return None
+
+    x_center = float((weights * xs).sum() / total_weight)
+    y_center = float((weights * ys).sum() / total_weight)
+
+    dx = xs - x_center
+    dy = ys - y_center
+    mu_xx = float((weights * dx * dx).sum() / total_weight)
+    mu_yy = float((weights * dy * dy).sum() / total_weight)
+    mu_xy = float((weights * dx * dy).sum() / total_weight)
+
+    covariance = np.array([[mu_xx, mu_xy], [mu_xy, mu_yy]])
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance)
+
+    if eigenvalues[1] <= 0:
+        return None
+
+    axis_ratio = float(np.sqrt(max(eigenvalues[0], 0.0) / eigenvalues[1]))
+    if not np.isfinite(axis_ratio) or axis_ratio <= 0:
+        return None
+
+    a_fit = r_eq / np.sqrt(axis_ratio)
+
+    # Broad, preliminary candidate filter; retain plausible cases for the profile test.
+    if not (0.0 < axis_ratio < 0.75 and n_mask_pix >= 40 and a_fit >= 3.0):
+        return None
+        
+    # Temporary bins based on mask elongation, not final bar strength.
+    if axis_ratio < 0.50:
+        return "strongly_barred"
+    return "weakly_barred"
+```
+
+```python
+from pathlib import Path
+import shutil
+
+barred_root = Path("barred_galaxies")
+weak_dir = barred_root / "weakly_barred"
+strong_dir = barred_root / "strongly_barred"
+
+weak_dir.mkdir(parents=True, exist_ok=True)
+strong_dir.mkdir(parents=True, exist_ok=True)
+
+barred_counts = {
+    "weakly_barred": 0,
+    "strongly_barred": 0,
+}
+
+for result in physical_results:
+    if not result["is_galaxy"]:
+        continue
+
+    category = is_barred(result)
+    if category is None:
+        continue
+
+    label = int(result["label"])
+    source_path = Path("cutouts_physical") / f"phys_src_{label:05d}.fits"
+    destination_dir = weak_dir if category == "weakly_barred" else strong_dir
+
+    if not source_path.exists():
+        print(f"Missing cutout, skipped: {source_path}")
+        continue
+
+    shutil.copy2(source_path, destination_dir / source_path.name)
+    barred_counts[category] += 1
+    print(f"{category}: {source_path.name}")
+
+print(
+    f"Suspected barred galaxies copied: "
+    f"{barred_counts['weakly_barred']} weakly barred, "
+    f"{barred_counts['strongly_barred']} strongly barred"
+)
+```
 ## Results
+These are a few galaxies detected as barred galaxies. 
+
+<img width="1287" height="391" alt="image" src="https://github.com/user-attachments/assets/ec335f16-2e27-4154-9b8b-f16bfd5f2513" />
+
+## Problems With Current Approach
+
+1. Some individual galaxies are detected as siblings
+2. Some bars are over / underestimated
+3. Stellar bar area in multi-galactical sources are not well detected
+4. Some galaxies are visually verified as an unbarred type, but still in the exports
+5. We have no idea how many candidates are dropped in earlier filters and we can't announce an exact number for that. 
+
+Note. Some of these problems will resolved by a more precise processing over candidates! 
 ## Processing Extracted Barred Galaxies Precisely
 This part is still in progress ... 
+
+---
+
+
