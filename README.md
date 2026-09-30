@@ -351,7 +351,11 @@ You can visually see some of these problems in image below.
 7. Some fainter pixels of bar are not included in firts estimation of fitted ellipse to the bar. This makes us concerned that some barred galaxies might have been dropped due to underestimation of bar area! 
 
 Note. Some of these problems will be resolved by a more precise processing over candidates, that will be done in next stage! 
-## Processing Extracted Barred Galaxies Precisely
-This part is still in progress ... 
+# Future Plans ... 
+1. Better displaying images using logarithm method of imaging
+2. Making sure that no possible candidate has been dropped in earlier filters
+3. Making sure that every non-relevanot sources such as PSF, Gravitational waves etc. have been dropped in earlier stages. 
+4. Using `photutils` package to draw ellipse profiles of a galaxy (peak above `3.0` asserts the existance of a bar.)
+5. Processing carefully over a barred-candidate using fourier transform.
 
 ---
